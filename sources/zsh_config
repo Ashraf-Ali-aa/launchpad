@@ -1,0 +1,30 @@
+plugins=(zsh-autosuggestions)
+
+unsetopt nomatch
+
+alias zshconfig="mate ~/.zshrc"
+alias vzsh="less ~/.zshrc"
+
+# GIT Commands #
+alias gco='git fetch origin; git checkout'
+alias rb='git rebase origin/develop'
+alias del='git branch -D'
+alias lol='git lol'
+alias lop='git lolp'
+alias st='git status'
+alias rh='git reset --hard'
+alias rhh='cd configuration; rh ;git submodule update --init; cd -'
+alias rr='git fetch --all && git rev-parse --abbrev-ref HEAD | xargs git reset --hard'
+alias log='git reflog'
+alias fix='git commit --fixup'
+alias dd='git diff'
+alias list='git br'
+alias clean='git branch --merged develop | grep -v develop | xargs -n 1 git branch -d'
+alias amend='git commit --amend --no-edit'
+
+#   Scripts    #
+alias gitc="code ~/.gitconfig"
+alias re="source ~/.zshrc"
+
+alias xcode="open -a Xcode ."
+alias kk="rm -rf ~/Library/Developer/Xcode/DerivedData"

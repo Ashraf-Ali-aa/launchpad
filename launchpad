@@ -13,8 +13,7 @@ set -e
 ###############################################################################
 
 if [ -e utils ]; then
-	cd "$(dirname "${BASH_SOURCE[0]}")" \
-		&& . "utils"
+	cd "$(dirname "${BASH_SOURCE[0]}")" && . "utils"
 else
 	printf "\n ??  ./utils not found  ???? First, you need to utils on your haters\n"
 	exit 1
@@ -31,40 +30,14 @@ check_bash_version
 ###############################################################################
 
 printf "
-
-MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-                                       .lKWMMMMMMMMMMMM
-                                         .lKWMMMMMMMMMM
-                                           .lKWMMMMMMMM
-        ....................................'cONWMMMMMM
-       ,0NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN0llKWMMMM
-       ;XMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMK, .lKWMM
-d,     ;XMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMK,   .lKW
-MXx,   ;XMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMK;     .l
-MMMXx, ;XMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMK,
-MMMMMXxdO00000000000KNMMMMMMMMMMMWX00000000000k'
-MMMMMMMNO:..........,OMMMMMMMMMMMX:...........
-MMMMMMMMMXx,        .kMMMMMMMMMMMK,
-MMMMMMMMMMMXx,      .kMMMMMMMMMMMK,
-MMMMMMMMMMMMMXx,    .kMMMMMMMMMMMK,        ............
-MMMMMMMMMMMMMMMXx,  .kMMMMMMMMMMMK,       :0KK000KKKKKK
-MMMMMMMMMMMMMMMMMXx''OMMMMMMMMMMMK,       oWMMMMMMMMMMM
-MMMMMMMMMMMMMMMMMMMXOkxddddddddddl.       oWMMMMMMMMMMM
-MMMMMMMMMMMMMMMMMMMMMXx,                  oWMMMMMMMMMMM
-MMMMMMMMMMMMMMMMMMMMMMMXd'                oWMMMMMMMMMMM
-MMMMMMMMMMMMMMMMMMMMMMMMMXdc'             oWMMMMMMMMMMM
-MMMMMMMMMMMMMMMMMMMMMMMMMMMWK:            oWMMMMMMMMMMM
-MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-?????????????????????????????????????????????????????
-?  Okay developers now let's get ready to ${bold}launch${normal}.   ?
-?????????????????????????????????????????????????????
-?  Safe to run multiple times on the same machine.  ?
-?  It ${green}installs${reset}, ${blue}upgrades${reset}, or ${yellow}skips${reset} packages based   ?
-?  on what is already installed on the machine.     ?
-?????????????????????????????????????????????????????
-   ${dim}$(get_os) $(get_os_version) ${normal} // ${dim}$BASH ${normal} // ${dim}$BASH_VERSION${reset}
+#####################################################
+#  Okay developers now let's get ready to ${bold}launch${normal}.   #
+#####################################################
+#  Safe to run multiple times on the same machine.  #
+#  It ${green}installs${reset}, ${blue}upgrades${reset}, or ${yellow}skips${reset} packages based   #
+#  on what is already installed on the machine.     #
+#####################################################
+${dim}$(get_os) $(get_os_version) ${normal} | ${dim}$BASH ${normal} | ${dim}$BASH_VERSION${reset}
 "
 
 ###############################################################################
@@ -93,8 +66,7 @@ chapter "Installing Dependencies?"
 # -----------------------------------------------------------------------------
 # XCode
 # -----------------------------------------------------------------------------
-if type xcode-select >&- && xpath=$( xcode-select --print-path ) &&
-	test -d "${xpath}" && test -x "${xpath}" ; then
+if xpath=$(xcode-select --print-path) && test -d "${xpath}" && test -x "${xpath}"; then
 	print_success_muted "Xcode already installed. Skipping."
 else
 	step "Installing Xcode?"
@@ -105,7 +77,6 @@ fi
 if [ ! -d "$HOME/.bin/" ]; then
 	mkdir "$HOME/.bin"
 fi
-
 
 # -----------------------------------------------------------------------------
 # NVM
@@ -150,11 +121,11 @@ fi
 ###############################################################################
 # INSTALL: brews
 ###############################################################################
-if [ -e $cwd/sources/brews ]; then
+if [ -e "$cwd/sources/brews" ]; then
 	chapter "Installing Homebrew formulae?"
 
-	for brew in $(<$cwd/sources/brews); do
-		install_brews $brew
+	for brew in $(<"$cwd/sources/brews"); do
+		install_brews "$brew"
 	done
 fi
 
@@ -165,14 +136,53 @@ chapter "Updating Homebrew formulae?"
 brew update
 
 ###############################################################################
+# Install: Oh My Zsh
+###############################################################################
+chapter "Install Oh My Zsh"
+
+if [[ -v $ZSH_CUSTOM ]]; then
+	print_success "Installing: Oh My Zsh"
+	sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+else
+	print_success_muted "Oh My Zsh already installed"
+fi
+
+###############################################################################
+# Setup: Ruby Manager - rbenv
+###############################################################################
+chapter "Setting up Ruby - rbenv and gems"
+
+if ! which rbenv >/dev/null 2>&1; then
+	LINE='eval "$(rbenv init -)"'
+
+	echo "Adding $LINE to ZSH"
+	grep -q "$LINE" ~/.zshrc || echo "$LINE" >>~/.zshrc
+
+	source ~/.zshrc
+
+fi
+
+install_ruby_version
+
+no_doc='gem: --no-document'
+
+grep -q "$no_doc" ~/.gemrc || echo "$no_doc" >>~/.gemrc
+
+if [ -e $cwd/sources/gems ]; then
+	while read -r gem; do
+		install_gem_packages "$gem"
+	done <"$cwd/sources/gems"
+fi
+
+###############################################################################
 # INSTALL: casks
 ###############################################################################
-if [ -e $cwd/sources/casks ]; then
+if [ -e "$cwd/sources/casks" ]; then
 	chapter "Installing apps via Homebrew?"
 
-	for cask in $(<$cwd/sources/casks); do
-	    install_application_via_brew $cask
-	done
+	while read -r cask; do
+		install_application_via_brew $cask
+	done <"$cwd/sources/casks"
 fi
 
 ###############################################################################
@@ -180,48 +190,78 @@ fi
 ###############################################################################
 chapter "Installing apps from App Store?"
 if [ -x mas ]; then
-
 	print_warning "Please install mas-cli first: brew mas. Skipping."
-
-	else
-
-	if [ -e $cwd/sources/apps ]; then
+else
+	if [ -e "$cwd/sources/mac-store" ]; then
 		if mas_setup; then
-			# Workaround for associative array in Bash 3
-			# https://stackoverflow.com/questions/6047648/bash-4-associative-arrays-error-declare-a-invalid-option
-			for app in $(<$cwd/sources/apps); do
+			while read -r app; do
 				KEY="${app%%::*}"
 				VALUE="${app##*::}"
-				install_application_via_app_store $KEY $VALUE
-			done
+
+				install_application_via_app_store "$KEY" "$VALUE"
+			done <$cwd/sources/mac-store
 		else
 			print_warning "Please signin to App Store first. Skipping."
 		fi
 	fi
-
 fi
 
 ###############################################################################
 # CLEAN: Homebrew files
 ###############################################################################
 chapter "Cleaning up Homebrew files?"
-brew cleanup 2> /dev/null
+brew cleanup 2>/dev/null
 
 ###############################################################################
 # INSTALL: npm packages
 ###############################################################################
-if [ -e $cwd/sources/npm ]; then
+if [ -e "$cwd/sources/npm" ]; then
 	chapter "Installing npm packages?"
 
-	for pkg in $(<$cwd/sources/npm); do
+	for pkg in $(<"$cwd/sources/npm"); do
 		KEY="${pkg%%::*}"
 		VALUE="${pkg##*::}"
-		install_npm_packages $KEY $VALUE
+		install_npm_packages "$KEY" "$VALUE"
 	done
 fi
 
+###############################################################################
+# Configure: Apps
+###############################################################################
+chapter "Configure: Apps"
+
+set_dock_options
+set_hot_corners
+set_finder_options
+set_iterm_options
 
 ###############################################################################
-# ??????????????????????????????????????????????????????????????????????#
+# Configure: Alias
+###############################################################################
+
+if [ -e $cwd/sources/zsh_config ]; then
+	chapter "Configure: ZSH Alias"
+
+	while read -r option; do
+		if grep -q "$option" ~/.zshrc; then
+			print_success_muted "Skipping: $option"
+		else
+			print_success "Adding: $option"
+			echo "$option" >>~/.zshrc
+		fi
+	done <"$cwd/sources/zsh_config"
+fi
+
+if [ -e $cwd/sources/git_config ]; then
+	chapter "Configure: Git Alias"
+
+	while read -r option; do
+		grep -q "$option" ~/.gitconfig || echo "$option" >>~/.gitconfig
+	done <"$cwd/sources/git_config"
+	print_success_muted "Added to .gitconfig"
+fi
+
+###############################################################################
+# Finish Script
 ###############################################################################
 we_have_lift_off

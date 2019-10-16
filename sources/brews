@@ -1,4 +1,12 @@
 git
-wget
-mas
+ideviceinstaller
 jq
+libimobiledevice
+mas
+openssl
+rbenv
+ruby-build
+tree
+wget
+libyaml
+libffi
