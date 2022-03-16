@@ -64,6 +64,25 @@ ssh_key_setup
 chapter "Installing Dependencies?"
 
 # -----------------------------------------------------------------------------
+# Homebrew
+# -----------------------------------------------------------------------------
+if ! [ -x "$(command -v brew)" ]; then
+	step "Installing Homebrew?"
+	/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+	export PATH="/usr/local/bin:$PATH"
+	export PATH="/opt/homebrew/bin:$PATH"
+	print_success "Homebrew installed!"
+else
+	print_success_muted "Homebrew already installed. Skipping."
+fi
+
+if brew list | grep -Fq brew-cask; then
+	step "Uninstalling old Homebrew-Cask?"
+	brew uninstall --force brew-cask
+	print_success "Homebrew-Cask uninstalled!"
+fi
+
+# -----------------------------------------------------------------------------
 # XCode
 # -----------------------------------------------------------------------------
 if xpath=$(xcode-select --print-path) && test -d "${xpath}" && test -x "${xpath}"; then
@@ -79,44 +98,34 @@ if [ ! -d "$HOME/.bin/" ]; then
 fi
 
 # -----------------------------------------------------------------------------
+# Rosetta
+# -----------------------------------------------------------------------------
+chapter "Checking Rosetta?"
+checkRosetta()
+
+# -----------------------------------------------------------------------------
 # NVM
 # -----------------------------------------------------------------------------
 if ! [ -e $NVM_DIR ]; then
 	step "Installing NVM?"
 	# ensures that nvm
 	touch ~/.bash_profile
-	curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash
+	curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
 	# This loads nvm for the terminal session
 	export NVM_DIR="$HOME/.nvm"
 	[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 	[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
 	print_success "NVM installed!"
 	step "Installing latest Node?"
-	nvm install 10
-	nvm use 10
+	nvm install --lts
+	nvm use --lts
 	nvm run node --version
 	nodev=$(node -v)
 	print_success "Using Node $nodev!"
 else
 	print_success_muted "NVM/Node already installed. Skipping."
 fi
-# -----------------------------------------------------------------------------
-# Homebrew
-# -----------------------------------------------------------------------------
-if ! [ -x "$(command -v brew)" ]; then
-	step "Installing Homebrew?"
-	curl -fsS 'https://raw.githubusercontent.com/Homebrew/install/master/install' | ruby
-	export PATH="/usr/local/bin:$PATH"
-	print_success "Homebrew installed!"
-else
-	print_success_muted "Homebrew already installed. Skipping."
-fi
 
-if brew list | grep -Fq brew-cask; then
-	step "Uninstalling old Homebrew-Cask?"
-	brew uninstall --force brew-cask
-	print_success "Homebrew-Cask uninstalled!"
-fi
 
 ###############################################################################
 # INSTALL: brews
@@ -133,18 +142,22 @@ fi
 # UPDATE: Homebrew
 ###############################################################################
 chapter "Updating Homebrew formulae?"
-brew update
+
+if ! brew doctor >/dev/null 2>&1; then
+	brew tap --repair 2>&1
+	brew update --preinstall 2>&1
+fi
 
 ###############################################################################
 # Install: Oh My Zsh
 ###############################################################################
 chapter "Install Oh My Zsh"
 
-if [[ -v $ZSH_CUSTOM ]]; then
-	print_success "Installing: Oh My Zsh"
-	sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-else
+if [ -d ~/.oh-my-zsh ]; then
 	print_success_muted "Oh My Zsh already installed"
+ else
+ 	print_success "Installing: Oh My Zsh"
+    sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 fi
 
 ###############################################################################
@@ -188,23 +201,23 @@ fi
 ###############################################################################
 # INSTALL: Mac App Store Apps
 ###############################################################################
-chapter "Installing apps from App Store?"
-if [ -x mas ]; then
-	print_warning "Please install mas-cli first: brew mas. Skipping."
-else
-	if [ -e "$cwd/sources/mac-store" ]; then
-		if mas_setup; then
-			while read -r app; do
-				KEY="${app%%::*}"
-				VALUE="${app##*::}"
+# chapter "Installing apps from App Store?"
+# if [ -x mas ]; then
+# 	print_warning "Please install mas-cli first: brew mas. Skipping."
+# else
+# 	if [ -e "$cwd/sources/mac-store" ]; then
+# 		if mas_setup; then
+# 			while read -r app; do
+# 				KEY="${app%%::*}"
+# 				VALUE="${app##*::}"
 
-				install_application_via_app_store "$KEY" "$VALUE"
-			done <$cwd/sources/mac-store
-		else
-			print_warning "Please signin to App Store first. Skipping."
-		fi
-	fi
-fi
+# 				install_application_via_app_store "$KEY" "$VALUE"
+# 			done <$cwd/sources/mac-store
+# 		else
+# 			print_warning "Please signin to App Store first. Skipping."
+# 		fi
+# 	fi
+# fi
 
 ###############################################################################
 # CLEAN: Homebrew files

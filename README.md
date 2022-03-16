@@ -24,6 +24,11 @@ launchpad:
 cd launchpad
 ./launchpad 2>&1 | tee ~/launchpad.log
 ```
+
+Remote install
+```sh
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Ashraf-Ali-aa/launchpad/master/install.sh)"
+```
 Just follow the prompts and you’ll be fine. 👌
 
 ⚠️ Warning ⚠️: I advise against running [this script](launchpad) unless you understand what it’s doing to your computer.

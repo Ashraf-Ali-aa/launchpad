@@ -524,9 +524,9 @@ install_application_via_brew() {
         application=$cask
     fi
 
-    if [[ ! $(brew cask list | grep $cask_name) && ! $(ls /Applications | grep -i "${application}") ]]; then
+    if [[ ! $(brew list --cask| grep $cask_name) && ! $(ls /Applications | grep -i "${application}") ]]; then
         echo_install "Installing $cask_name"
-        brew cask install $cask --appdir=/Applications >/dev/null
+        brew install $cask --cask --appdir=/Applications >/dev/null
         print_in_green "${bold}✓ installed!${normal}\n"
     else
         print_success_muted "$cask_name already installed. Skipped."
@@ -567,8 +567,8 @@ install_ruby_version() {
             build='2.5.5'
             break
             ;;
-        2.3.3)
-            build='2.3.3'
+        3.0.0)
+            build='3.0.0'
             break
             ;;
         Pick*)
@@ -604,6 +604,21 @@ install_npm_packages() {
     else
         print_success_muted "$1 already installed. Skipped."
     fi
+}
+
+checkRosetta() {
+    processor=$(/usr/sbin/sysctl -n machdep.cpu.brand_string | grep -o \"Intel\")
+	if [[ -n \"$processor\" ]]; then
+	    	echo 'intel'
+	 else
+		if [[ \"`pkgutil --files com.apple.pkg.RosettaUpdateAuto`\" == \"\" ]]
+		then 
+			echo 'not-present'
+            sudo /usr/sbin/softwareupdate --install-rosetta --agree-to-license
+		else
+			echo 'installed'
+		fi 
+	fi
 }
 
 # The releases are returned in the format
@@ -669,7 +684,7 @@ set_finder_options() {
 set_iterm_options() {
     # Dont display the annoying prompt when quitting iTerm
     set_app_default com.googlecode.iterm2 PromptOnQuit -bool false
-
+    echo ""
     if ask "Load custom iTerm Profile: " Y; then
         local src="$cwd/assets/com.googlecode.iterm2.plist"
         local destination="$HOME/Library/Preferences"
