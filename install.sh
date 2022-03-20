@@ -55,7 +55,7 @@ copy_key_github() {
     [[ -f "$pub" ]] && cat "$pub" | pbcopy
     open 'https://github.com/account/ssh'
     read -r -p "   ✦  Press enter to continue"
-    print_success "SSH key"
+    echo "SSH key"
     return
 }
 
