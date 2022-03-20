@@ -123,7 +123,7 @@ ssh_key_setup
 # Homebrew
 # -----------------------------------------------------------------------------
 if ! [ -x "$(command -v brew)" ]; then
-	step "Installing Homebrew?"
+	echo "Installing Homebrew?"
 	/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 	export PATH="/usr/local/bin:$PATH"
 	export PATH="/opt/homebrew/bin:$PATH"
@@ -133,7 +133,7 @@ else
 fi
 
 if brew list | grep -Fq brew-cask; then
-	step "Uninstalling old Homebrew-Cask?"
+	echo "Uninstalling old Homebrew-Cask?"
 	brew uninstall --force brew-cask
 	echo "Homebrew-Cask uninstalled!"
 fi
@@ -144,7 +144,7 @@ fi
 if xpath=$(xcode-select --print-path) && test -d "${xpath}" && test -x "${xpath}"; then
 	echo "Xcode already installed. Skipping."
 else
-	step "Installing Xcode?"
+	echo "Installing Xcode?"
 	xcode-select --install
 	echo "Xcode installed!"
 fi
